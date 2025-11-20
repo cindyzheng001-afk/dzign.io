@@ -1,4 +1,4 @@
-# VibeRefine
+# dzign.io
 
 An AI-powered interior design tool built with React, Vite, and the Google Gemini API.
 

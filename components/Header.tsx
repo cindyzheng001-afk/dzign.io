@@ -10,7 +10,7 @@ export const Header: React.FC = () => {
             <Sparkles size={24} />
           </div>
           <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-            VibeRefine
+            dzign.io
           </h1>
         </div>
         <nav className="hidden md:flex gap-6 text-sm font-medium text-gray-500">

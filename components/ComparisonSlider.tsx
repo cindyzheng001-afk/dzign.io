@@ -89,7 +89,7 @@ export const ComparisonSlider: React.FC<ComparisonSliderProps> = ({ beforeImage,
       <div className="absolute bottom-4 right-4 z-30">
          <a 
            href={afterImage} 
-           download="vibe-refine-design.png" 
+           download="dzign-io-design.png" 
            className="bg-black/60 hover:bg-black/80 backdrop-blur text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all pointer-events-auto"
            onClick={(e) => e.stopPropagation()}
          >
