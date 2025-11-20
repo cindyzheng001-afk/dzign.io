@@ -1,11 +1,22 @@
-<div align="center">
+# VibeRefine
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+An AI-powered interior design tool built with React, Vite, and the Google Gemini API.
 
-  <h1>Built with AI Studio</h2>
+## Setup
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+1.  **Install Dependencies:**
+    ```bash
+    npm install
+    ```
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+2.  **Setup API Key:**
+    *   Open the `.env` file in the root directory.
+    *   Add your Gemini API key: `VITE_API_KEY=your_key_here`.
 
-</div>
+3.  **Run the App:**
+    ```bash
+    npm run dev
+    ```
+
+4.  **Open in Browser:**
+    *   Click the link shown in the terminal (usually `http://localhost:5173`).
