@@ -1,4 +1,4 @@
-import { GoogleGenAI, Modality, Type } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { FurnitureItem } from "../types";
 import { buildMiningPrompt } from "../constants";
 
@@ -47,14 +47,16 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
         ],
       },
       config: {
-        responseModalities: [Modality.IMAGE],
         // Temperature is not supported in gemini-2.5-flash-image for image generation
       },
     });
 
-    const part = response.candidates?.[0]?.content?.parts?.[0];
-    if (part && part.inlineData && part.inlineData.data) {
-      return `data:image/png;base64,${part.inlineData.data}`;
+    if (response.candidates?.[0]?.content?.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          return `data:image/png;base64,${part.inlineData.data}`;
+        }
+      }
     }
     throw new Error("No image generated.");
   } catch (error) {
