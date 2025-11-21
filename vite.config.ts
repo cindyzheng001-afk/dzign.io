@@ -14,7 +14,8 @@ export default defineConfig(({ mode }) => {
                  env.GEMINI_API_KEY || 
                  env.GOOGLE_GENAI_API_KEY ||
                  process.env.API_KEY ||
-                 process.env.VITE_API_KEY;
+                 process.env.VITE_API_KEY ||
+                 "";
 
   return {
     plugins: [react()],
