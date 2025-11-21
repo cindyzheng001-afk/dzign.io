@@ -81,9 +81,9 @@ const App: React.FC = () => {
         const lowerMsg = msg.toLowerCase();
         
         if (msg === 'API_KEY_MISSING') {
-          errorMessage = "API Key is missing in environment variables.";
+          errorMessage = "API Key not found. Please ensure VITE_API_KEY is set in your .env file.";
         } else if (lowerMsg.includes("requested entity was not found") || lowerMsg.includes("403") || lowerMsg.includes("api key")) {
-           errorMessage = "API Key is invalid or expired.";
+           errorMessage = "API Key is invalid or expired. Please check your .env file.";
         } else if (lowerMsg.includes("503") || lowerMsg.includes("overloaded")) {
            errorMessage = "AI Service is momentarily overloaded. Please try again.";
         } else {
