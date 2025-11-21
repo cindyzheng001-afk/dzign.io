@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { Button } from './components/Button';
 import { ImageUploader } from './components/ImageUploader';
@@ -8,7 +8,7 @@ import { ComparisonSlider } from './components/ComparisonSlider';
 import { DESIGN_STYLES, buildMakeoverPrompt, buildPartialPrompt } from './constants';
 import { AppState, FurnitureItem, ProcessingState, DesignMode } from './types';
 import { restyleRoom, mineFurnitureData } from './services/geminiService';
-import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, RefreshCw, Sparkles } from 'lucide-react';
+import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, RefreshCw } from 'lucide-react';
 
 const App: React.FC = () => {
   // App Data State
@@ -25,44 +25,6 @@ const App: React.FC = () => {
 
   const [shoppingItems, setShoppingItems] = useState<FurnitureItem[]>([]);
   const [processingState, setProcessingState] = useState<ProcessingState>({ status: AppState.IDLE });
-
-  // API Key State
-  const [isKeySelected, setIsKeySelected] = useState<boolean>(false);
-  const [isCheckingKey, setIsCheckingKey] = useState<boolean>(true);
-
-  useEffect(() => {
-    const checkKey = async () => {
-      // 1. Check if the API key is already available in the environment (e.g. from .env file)
-      // We prioritize this to allow users to simply provide their key and skip the UI picker.
-      if (process.env.API_KEY && process.env.API_KEY.trim() !== '') {
-        setIsKeySelected(true);
-        setIsCheckingKey(false);
-        return;
-      }
-
-      // 2. If no environment key, check AI Studio integration
-      if (window.aistudio) {
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        setIsKeySelected(hasKey);
-      } else {
-        // No key in env, and no platform integration
-        setIsKeySelected(false);
-      }
-      setIsCheckingKey(false);
-    };
-    checkKey();
-  }, []);
-
-  const handleSelectKey = async () => {
-    if (window.aistudio) {
-      await window.aistudio.openSelectKey();
-      // Mitigate race condition by assuming success immediately after user action
-      setIsKeySelected(true);
-    } else {
-      // Local dev fallback helper
-      alert("No AI Studio environment detected. Please ensure VITE_API_KEY is set in your .env file.");
-    }
-  };
 
   const handleImageUpload = (base64: string) => {
     setOriginalImage(base64);
@@ -119,15 +81,11 @@ const App: React.FC = () => {
         const lowerMsg = msg.toLowerCase();
         
         if (msg === 'API_KEY_MISSING') {
-          errorMessage = "Config Error: API Key not found. Please ensure 'API_KEY' or 'VITE_API_KEY' is set in your environment variables or .env file.";
-        } else if (lowerMsg.includes("requested entity was not found")) {
-           // Specific handling for invalid session/key in AI Studio
-           setIsKeySelected(false);
-           errorMessage = "Session expired. Please connect your API Key again.";
-        } else if (lowerMsg.includes("403") || lowerMsg.includes("api key")) {
-           errorMessage = "Access Denied: The provided API Key is invalid or expired. Please check your configuration.";
+          errorMessage = "API Key is missing in environment variables.";
+        } else if (lowerMsg.includes("requested entity was not found") || lowerMsg.includes("403") || lowerMsg.includes("api key")) {
+           errorMessage = "API Key is invalid or expired.";
         } else if (lowerMsg.includes("503") || lowerMsg.includes("overloaded")) {
-           errorMessage = "Service Overloaded: The AI is busy. Please try again in a moment.";
+           errorMessage = "AI Service is momentarily overloaded. Please try again.";
         } else {
            errorMessage = `Error: ${error.message}`;
         }
@@ -145,35 +103,6 @@ const App: React.FC = () => {
   };
 
   const isProcessing = processingState.status === AppState.GENERATING || processingState.status === AppState.MINING;
-
-  if (isCheckingKey) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
-  if (!isKeySelected) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 text-center">
-        <div className="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-indigo-200">
-          <Sparkles size={40} className="text-white" />
-        </div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4 tracking-tight">Welcome to dzign.io</h1>
-        <p className="text-lg text-gray-600 max-w-md mb-10 leading-relaxed">
-          Experience AI-powered interior design. Please connect your Google account to access the Gemini API and start creating.
-        </p>
-        <Button onClick={handleSelectKey} className="w-full max-w-sm py-4 text-lg">
-          Connect API Key
-          <ArrowRight size={20} />
-        </Button>
-        <p className="mt-8 text-sm text-gray-400">
-          Powered by Google Gemini
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -297,18 +226,23 @@ const App: React.FC = () => {
             </div>
             
              {processingState.status === AppState.ERROR && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 text-red-700 text-sm items-start animate-fade-in">
-                <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                <p className="break-words w-full font-medium">{processingState.message}</p>
-                <Button 
-                  variant="secondary" 
-                  className="text-xs py-1 px-3 h-auto ml-auto whitespace-nowrap"
-                  onClick={() => { 
-                    setProcessingState({ status: AppState.IDLE });
-                  }}
-                >
-                  Dismiss
-                </Button>
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-2 animate-fade-in">
+                <div className="flex gap-3 text-red-700 text-sm items-start">
+                  <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                  <p className="break-words w-full font-medium">{processingState.message}</p>
+                </div>
+                
+                <div className="flex gap-2 justify-end ml-8">
+                   <Button 
+                    variant="secondary" 
+                    className="text-xs py-2 px-4 h-auto whitespace-nowrap"
+                    onClick={() => { 
+                      setProcessingState({ status: AppState.IDLE });
+                    }}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
               </div>
             )}
 
