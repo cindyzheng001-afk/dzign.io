@@ -47,8 +47,9 @@ export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '')
   
   IMPORTANT STRUCTURAL CONSTRAINTS:
   1. DO NOT cover windows or doors with artwork, furniture, or decor. Windows must remain clear and transparent.
-  2. DO NOT change the size or position of structural elements (walls, windows, doorways).
-  3. Maintain the original perspective and lighting direction.
+  2. WALLS are for art. WINDOWS are for light. Do not confuse them.
+  3. DO NOT change the size or position of structural elements (walls, windows, doorways).
+  4. Maintain the original perspective and lighting direction.
   `;
   
   // Smart flooring preservation logic for makeover mode

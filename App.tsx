@@ -77,10 +77,20 @@ const App: React.FC = () => {
     } catch (error) {
       console.error(error);
       let errorMessage = "Oops! The AI had a creative block. Please check your API Key or try again.";
+      
       if (error instanceof Error) {
-        // Append technical details if available to help debug
-        errorMessage += ` (Details: ${error.message})`;
+        const msg = error.message.toLowerCase();
+        if (msg.includes("api key") || msg.includes("unauthenticated")) {
+           errorMessage = "Configuration Error: API Key is missing or invalid.";
+        } else if (msg.includes("403") || msg.includes("permission")) {
+           errorMessage = "Access Denied: The provided API Key is invalid or expired.";
+        } else if (msg.includes("503") || msg.includes("overloaded")) {
+           errorMessage = "Service Overloaded: The AI is busy. Please try again in a moment.";
+        } else {
+           errorMessage += ` (Details: ${error.message})`;
+        }
       }
+      
       setProcessingState({ 
         status: AppState.ERROR, 
         message: errorMessage
@@ -217,9 +227,9 @@ const App: React.FC = () => {
             </div>
             
              {processingState.status === AppState.ERROR && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 text-red-700 text-sm items-start">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 text-red-700 text-sm items-start animate-fade-in">
                 <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                <p className="break-all">{processingState.message}</p>
+                <p className="break-words w-full font-medium">{processingState.message}</p>
               </div>
             )}
 

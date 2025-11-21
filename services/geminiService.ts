@@ -13,9 +13,10 @@ const getAiClient = () => {
     
     if (!apiKey) {
        console.error("CRITICAL: No API Key found. Please ensure process.env.API_KEY is set.");
+       throw new Error("API Key not found. Please check your environment configuration.");
     }
 
-    aiClient = new GoogleGenAI({ apiKey: apiKey || '' });
+    aiClient = new GoogleGenAI({ apiKey });
   }
   return aiClient;
 };
@@ -36,7 +37,7 @@ const getBase64Data = (base64String: string) => {
 
 /**
  * Compresses and resizes an image to ensure it fits within API payload limits.
- * Max dimension set to 800px to ensure high reliability and prevent timeouts.
+ * Max dimension set to 512px to ensure high reliability and prevent timeouts.
  */
 const compressImage = async (base64String: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -45,7 +46,7 @@ const compressImage = async (base64String: string): Promise<string> => {
       const canvas = document.createElement('canvas');
       let width = img.width;
       let height = img.height;
-      const maxDim = 800; // Reduced from 1024 to 800 for better stability
+      const maxDim = 512; // Reduced to 512px for maximum stability and speed
 
       if (width > maxDim || height > maxDim) {
         if (width > height) {
@@ -66,8 +67,8 @@ const compressImage = async (base64String: string): Promise<string> => {
       }
       
       ctx.drawImage(img, 0, 0, width, height);
-      // Convert to JPEG with 0.7 quality for reduced payload size
-      resolve(canvas.toDataURL('image/jpeg', 0.7));
+      // Convert to JPEG with 0.6 quality for reduced payload size
+      resolve(canvas.toDataURL('image/jpeg', 0.6));
     };
     img.onerror = (err) => reject(err);
     img.src = base64String;
