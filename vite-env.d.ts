@@ -6,9 +6,10 @@ declare module '*.jpeg';
 declare module '*.svg';
 declare module '*.gif';
 
-interface Window {
-  aistudio?: {
-    hasSelectedApiKey: () => Promise<boolean>;
-    openSelectKey: () => Promise<void>;
+// Ensure process.env is typed for the API key usage
+declare var process: {
+  env: {
+    API_KEY: string;
+    [key: string]: string | undefined;
   }
-}
+};

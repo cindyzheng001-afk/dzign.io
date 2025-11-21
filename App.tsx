@@ -8,7 +8,7 @@ import { ComparisonSlider } from './components/ComparisonSlider';
 import { DESIGN_STYLES, buildMakeoverPrompt, buildPartialPrompt } from './constants';
 import { AppState, FurnitureItem, ProcessingState, DesignMode } from './types';
 import { restyleRoom, mineFurnitureData } from './services/geminiService';
-import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, RefreshCw } from 'lucide-react';
+import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, FileKey } from 'lucide-react';
 
 const App: React.FC = () => {
   // App Data State
@@ -26,12 +26,28 @@ const App: React.FC = () => {
   const [shoppingItems, setShoppingItems] = useState<FurnitureItem[]>([]);
   const [processingState, setProcessingState] = useState<ProcessingState>({ status: AppState.IDLE });
 
+  const clearError = () => {
+    if (processingState.status === AppState.ERROR) {
+      setProcessingState({ status: AppState.IDLE });
+    }
+  };
+
   const handleImageUpload = (base64: string) => {
     setOriginalImage(base64);
     setGeneratedImage(null);
     setShoppingItems([]);
     setProcessingState({ status: AppState.IDLE });
     setRefinementInstruction("");
+  };
+
+  const handleModeChange = (newMode: DesignMode) => {
+    setMode(newMode);
+    clearError();
+  };
+
+  const handleStyleChange = (id: string) => {
+    setSelectedStyleId(id);
+    clearError();
   };
 
   const handleGenerate = async () => {
@@ -81,11 +97,11 @@ const App: React.FC = () => {
         const lowerMsg = msg.toLowerCase();
         
         if (msg === 'API_KEY_MISSING') {
-          errorMessage = "API Key not found. Please ensure VITE_API_KEY is set in your .env file.";
+          errorMessage = "API_KEY_MISSING"; // Special code to render the help UI
         } else if (lowerMsg.includes("requested entity was not found") || lowerMsg.includes("403") || lowerMsg.includes("api key")) {
-           errorMessage = "API Key is invalid or expired. Please check your .env file.";
+           errorMessage = "Authentication Error: API Key is invalid or expired. Please check your .env file.";
         } else if (lowerMsg.includes("503") || lowerMsg.includes("overloaded")) {
-           errorMessage = "AI Service is momentarily overloaded. Please try again.";
+           errorMessage = "Service Busy: The AI is momentarily overloaded. Please try again.";
         } else {
            errorMessage = `Error: ${error.message}`;
         }
@@ -98,11 +114,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleRefine = () => {
-    handleGenerate();
-  };
-
   const isProcessing = processingState.status === AppState.GENERATING || processingState.status === AppState.MINING;
+  const isApiKeyError = processingState.message === "API_KEY_MISSING";
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -147,7 +160,7 @@ const App: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => setMode('MAKEOVER')}
+                  onClick={() => handleModeChange('MAKEOVER')}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${mode === 'MAKEOVER' ? 'border-indigo-600 bg-indigo-50 text-indigo-900' : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600'}`}
                 >
                   <Layers className="mb-2" size={24} />
@@ -156,7 +169,7 @@ const App: React.FC = () => {
                 </button>
                 
                 <button
-                  onClick={() => setMode('PARTIAL')}
+                  onClick={() => handleModeChange('PARTIAL')}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${mode === 'PARTIAL' ? 'border-indigo-600 bg-indigo-50 text-indigo-900' : 'border-gray-200 bg-white hover:border-gray-300 text-gray-600'}`}
                 >
                   <Armchair className="mb-2" size={24} />
@@ -181,7 +194,7 @@ const App: React.FC = () => {
                   <label className="block text-sm font-bold text-gray-700 mb-2">What to Add?</label>
                   <textarea
                     value={itemsToAdd}
-                    onChange={(e) => setItemsToAdd(e.target.value)}
+                    onChange={(e) => { setItemsToAdd(e.target.value); clearError(); }}
                     placeholder="e.g., A large Persian rug, a standing mirror, and a plant..."
                     className="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-0 outline-none min-h-[100px] text-gray-700 resize-none transition-colors text-sm"
                   />
@@ -202,7 +215,7 @@ const App: React.FC = () => {
                         key={style.id}
                         style={style}
                         isSelected={selectedStyleId === style.id}
-                        onClick={() => setSelectedStyleId(style.id)}
+                        onClick={() => handleStyleChange(style.id)}
                       />
                     ))}
                   </div>
@@ -226,13 +239,28 @@ const App: React.FC = () => {
             </div>
             
              {processingState.status === AppState.ERROR && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex flex-col gap-2 animate-fade-in">
-                <div className="flex gap-3 text-red-700 text-sm items-start">
-                  <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                  <p className="break-words w-full font-medium">{processingState.message}</p>
-                </div>
+              <div className={`p-4 rounded-xl flex flex-col gap-2 animate-fade-in ${isApiKeyError ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-200'}`}>
+                {isApiKeyError ? (
+                  <div className="space-y-3">
+                    <div className="flex gap-3 text-amber-800 text-sm items-start font-semibold">
+                      <FileKey size={20} className="shrink-0 mt-0.5" />
+                      <p>Missing API Key</p>
+                    </div>
+                    <p className="text-xs text-amber-700">
+                      To use the AI features, you need to create a file named <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">.env</code> in your project folder with the following content:
+                    </p>
+                    <div className="bg-white p-3 rounded border border-amber-200 font-mono text-xs text-gray-600 overflow-x-auto">
+                      VITE_API_KEY=AIzaSy...
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-3 text-red-700 text-sm items-start">
+                    <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                    <p className="break-words w-full font-medium">{processingState.message}</p>
+                  </div>
+                )}
                 
-                <div className="flex gap-2 justify-end ml-8">
+                <div className="flex gap-2 justify-end">
                    <Button 
                     variant="secondary" 
                     className="text-xs py-2 px-4 h-auto whitespace-nowrap"
@@ -261,87 +289,33 @@ const App: React.FC = () => {
                   </div>
                 ) : (
                   <div className="h-[500px] flex flex-col items-center justify-center p-12 text-center text-gray-400 space-y-4 border border-gray-200 rounded-3xl bg-gray-50">
-                    {isProcessing ? (
-                      <>
-                        <div className="relative w-24 h-24">
-                          <div className="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
-                          <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
-                        </div>
-                        <p className="animate-pulse font-medium text-indigo-600">{processingState.message}</p>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-2 shadow-sm">
-                          <Wand2 size={32} className="text-gray-300" />
-                        </div>
-                        <p className="text-lg font-medium text-gray-500">Your new room awaits.</p>
-                        <p className="text-sm">Upload a photo and click Generate to see the magic.</p>
-                      </>
-                    )}
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <Layers className="text-gray-300" size={40} />
+                    </div>
+                    <p className="text-xl font-medium text-gray-500">Your masterpiece will appear here</p>
+                    <p className="text-sm text-gray-400 max-w-xs">
+                        Upload a photo and click "Redesign Room" to see the magic happen.
+                    </p>
                   </div>
                 )}
              </section>
 
-             {/* Post-Generation Refinement */}
-             {generatedImage && (
-               <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm animate-fade-in-up">
-                 <div className="flex items-center gap-2 mb-4 text-gray-900 font-bold">
-                    <RefreshCw size={20} className="text-indigo-600" />
-                    <h3>Refine Result</h3>
-                 </div>
-                 <div className="flex gap-3 flex-col sm:flex-row">
-                   <input 
-                    type="text"
-                    value={refinementInstruction}
-                    onChange={(e) => setRefinementInstruction(e.target.value)}
-                    placeholder={mode === 'MAKEOVER' ? "e.g., Make the sofa green, change rug to beige..." : "e.g., Move the plant to the left, make the mirror round..."}
-                    className="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all"
-                    onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
-                   />
-                   <Button 
-                    variant="secondary" 
-                    onClick={handleRefine} 
-                    disabled={isProcessing || !refinementInstruction.trim()}
-                    className="whitespace-nowrap"
-                   >
-                     Update Design
-                   </Button>
-                 </div>
-               </section>
-             )}
-
-             {/* Data Mining Results: Shopping List */}
+             {/* Shopping List */}
              {shoppingItems.length > 0 && (
-               <section className="animate-fade-in-up">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                       <span className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-sm">4</span>
-                       <h3 className="text-2xl font-bold text-gray-900">Shop the Look</h3>
+                <section className="animate-fade-in-up">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
+                       <ArrowRight size={20} />
                     </div>
-                    <span className="text-sm text-gray-500 hidden sm:inline">
-                       {mode === 'PARTIAL' ? 'Items you added' : 'AI-identified items'}
-                    </span>
+                    <h3 className="text-2xl font-bold text-gray-900">Shop the Look</h3>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {shoppingItems.map((item, index) => (
-                      <ShoppingItem key={index} item={item} index={index} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {shoppingItems.map((item, idx) => (
+                      <ShoppingItem key={idx} item={item} index={idx} />
                     ))}
                   </div>
-
-                  <div className="mt-6 p-6 bg-gradient-to-r from-indigo-600 to-purple-700 rounded-2xl text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
-                    <div>
-                      <h4 className="font-bold text-lg">Want to try another style?</h4>
-                      <p className="text-indigo-100 text-sm">Scroll up to change the vibe or items.</p>
-                    </div>
-                    <button 
-                      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                      className="bg-white text-indigo-700 px-6 py-2 rounded-full font-bold hover:bg-indigo-50 transition-colors flex items-center gap-2 whitespace-nowrap"
-                    >
-                      Scroll Up <ArrowRight size={16} />
-                    </button>
-                  </div>
-               </section>
+                </section>
              )}
           </div>
         </div>
