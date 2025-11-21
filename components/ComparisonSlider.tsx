@@ -46,23 +46,27 @@ export const ComparisonSlider: React.FC<ComparisonSliderProps> = ({ beforeImage,
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-[300px] md:h-[500px] bg-gray-900 overflow-hidden rounded-lg md:rounded-2xl select-none cursor-col-resize group shadow-2xl"
+      className="relative w-full bg-gray-900 rounded-lg md:rounded-2xl overflow-hidden select-none cursor-col-resize group shadow-2xl"
       onMouseDown={(e) => { setIsResizing(true); handleMove(e.clientX); }}
       onTouchStart={(e) => { setIsResizing(true); handleMove(e.touches[0].clientX); }}
     >
-      {/* After Image (Background Layer) */}
+      {/* 
+        Use the 'After' image as the relative block element to set the container's height 
+        naturally based on the image aspect ratio. This prevents cropping.
+      */}
       <img 
         src={afterImage} 
         alt="After Design" 
-        className="absolute inset-0 w-full h-full object-contain pointer-events-none" 
+        className="block w-full h-auto max-h-[80vh] object-contain" 
       />
-      <div className="absolute top-4 right-4 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow-lg">
+      
+      <div className="absolute top-4 right-4 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full z-10 shadow-lg pointer-events-none">
         AFTER
       </div>
 
-      {/* Before Image (Top Layer - Clipped) */}
+      {/* Before Image (Absolute Overlay) */}
       <div 
-        className="absolute inset-0 w-full h-full pointer-events-none"
+        className="absolute inset-0 w-full h-full pointer-events-none bg-gray-900"
         style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
       >
         <img 

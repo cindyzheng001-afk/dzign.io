@@ -34,9 +34,52 @@ const getBase64Data = (base64String: string) => {
   };
 };
 
+/**
+ * Compresses and resizes an image to ensure it fits within API payload limits.
+ * Max dimension set to 1024px.
+ */
+const compressImage = async (base64String: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      const maxDim = 1024;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error("Could not get canvas context"));
+        return;
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      // Convert to JPEG with 0.8 quality for good balance
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = (err) => reject(err);
+    img.src = base64String;
+  });
+};
+
 export const restyleRoom = async (base64Image: string, prompt: string): Promise<string> => {
   try {
-    const { mimeType, data } = getBase64Data(base64Image);
+    // Optimize image before sending
+    const optimizedImage = await compressImage(base64Image);
+    const { mimeType, data } = getBase64Data(optimizedImage);
+    
     const client = getAiClient();
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash-image',
@@ -67,7 +110,10 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
 
 export const mineFurnitureData = async (generatedBase64Image: string, focusItems?: string): Promise<FurnitureItem[]> => {
   try {
-    const { mimeType, data } = getBase64Data(generatedBase64Image);
+    // Optimize image before sending (even for mining, smaller is faster/safer)
+    const optimizedImage = await compressImage(generatedBase64Image);
+    const { mimeType, data } = getBase64Data(optimizedImage);
+    
     const prompt = buildMiningPrompt(focusItems);
     const client = getAiClient();
 

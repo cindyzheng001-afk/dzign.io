@@ -38,7 +38,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onIm
       {!currentImage ? (
         <div 
           onClick={triggerInput}
-          className="w-full h-64 md:h-96 border-3 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-gray-50 transition-colors group"
+          className="w-full h-64 md:h-80 border-3 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-gray-50 transition-colors group"
         >
           <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
             <Upload className="text-indigo-600" size={32} />
@@ -49,11 +49,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ currentImage, onIm
           </p>
         </div>
       ) : (
-        <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden shadow-md group">
+        <div className="relative w-full rounded-2xl overflow-hidden shadow-md group bg-gray-900">
           <img 
             src={currentImage} 
             alt="Uploaded Room" 
-            className="w-full h-full object-cover"
+            className="w-full h-auto max-h-[500px] object-contain block"
           />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
              <button 
