@@ -2,25 +2,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { FurnitureItem } from "../types";
 import { buildMiningPrompt } from "../constants";
 
-// Lazy initialize the client
-let aiClient: GoogleGenAI | null = null;
-
-const getAiClient = () => {
-  if (!aiClient) {
-    // The API key must be obtained exclusively from the environment variable process.env.API_KEY
-    // per the environment guidelines.
-    const apiKey = process.env.API_KEY;
-    
-    if (!apiKey) {
-       console.error("CRITICAL: No API Key found. Please ensure process.env.API_KEY is set.");
-       throw new Error("API Key not found. Please check your environment configuration.");
-    }
-
-    aiClient = new GoogleGenAI({ apiKey });
-  }
-  return aiClient;
-};
-
 /**
  * Helper to extract mime type and base64 data from a data URL
  */
@@ -77,11 +58,17 @@ const compressImage = async (base64String: string): Promise<string> => {
 
 export const restyleRoom = async (base64Image: string, prompt: string): Promise<string> => {
   try {
+    // Always create a new client to pick up the latest env var (handling dynamic key selection)
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+       throw new Error("API Key is missing. Please select an API Key using the button on the home screen.");
+    }
+    const client = new GoogleGenAI({ apiKey });
+
     // Optimize image before sending
     const optimizedImage = await compressImage(base64Image);
     const { mimeType, data } = getBase64Data(optimizedImage);
     
-    const client = getAiClient();
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash-image',
       contents: {
@@ -89,9 +76,6 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
           { inlineData: { data, mimeType } },
           { text: prompt },
         ],
-      },
-      config: {
-        // Temperature is not supported in gemini-2.5-flash-image for image generation
       },
     });
 
@@ -111,12 +95,21 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
 
 export const mineFurnitureData = async (generatedBase64Image: string, focusItems?: string): Promise<FurnitureItem[]> => {
   try {
+    // Always create a new client
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+       // If we got here, restyleRoom probably already failed or succeeded, 
+       // but we still need a key for this 2nd call.
+       console.warn("Skipping mining due to missing API key");
+       return [];
+    }
+    const client = new GoogleGenAI({ apiKey });
+
     // Optimize image before sending (even for mining, smaller is faster/safer)
     const optimizedImage = await compressImage(generatedBase64Image);
     const { mimeType, data } = getBase64Data(optimizedImage);
     
     const prompt = buildMiningPrompt(focusItems);
-    const client = getAiClient();
 
     const response = await client.models.generateContent({
       model: 'gemini-2.5-flash',

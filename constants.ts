@@ -50,6 +50,12 @@ export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '')
   2. WALLS are for art. WINDOWS are for light. Do not confuse them.
   3. DO NOT change the size or position of structural elements (walls, windows, doorways).
   4. Maintain the original perspective and lighting direction.
+  
+  NEGATIVE PROMPT (STRICTLY FORBIDDEN):
+  - NO art, posters, or frames on glass windows.
+  - NO furniture blocking doorways.
+  - NO blurry or distorted furniture.
+  - NO text or watermarks in the image.
   `;
   
   // Smart flooring preservation logic for makeover mode
@@ -96,8 +102,10 @@ export const buildPartialPrompt = (itemsToAdd: string, styleLabel: string, refin
      - DO NOT change the Sofa or main furniture layout.
      - DO NOT resize the TV or screens.
      - DO NOT place items over windows or block doorways.
-  3. IF adding an item (e.g. "add a plant"), find an EMPTY spot and place it there. Do not replace existing furniture.
-  4. IF editing an item (e.g. "green wall"), identify that specific item and change ONLY its color/texture. Keep the geometry and surrounding objects identical.
+  
+  NEGATIVE PROMPT (STRICTLY FORBIDDEN):
+  - NO art or decor on windows.
+  - NO changing the walls or ceiling.
   
   Output: A photorealistic image identical to the original except for the requested change.
   `;

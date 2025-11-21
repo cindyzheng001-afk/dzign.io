@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Button } from './components/Button';
 import { ImageUploader } from './components/ImageUploader';
@@ -8,9 +8,14 @@ import { ComparisonSlider } from './components/ComparisonSlider';
 import { DESIGN_STYLES, buildMakeoverPrompt, buildPartialPrompt } from './constants';
 import { AppState, FurnitureItem, ProcessingState, DesignMode } from './types';
 import { restyleRoom, mineFurnitureData } from './services/geminiService';
-import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, RefreshCw } from 'lucide-react';
+import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, RefreshCw, Key } from 'lucide-react';
 
 const App: React.FC = () => {
+  // API Key State
+  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
+  const [isCheckingKey, setIsCheckingKey] = useState<boolean>(true);
+
+  // App Data State
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   
@@ -24,6 +29,29 @@ const App: React.FC = () => {
 
   const [shoppingItems, setShoppingItems] = useState<FurnitureItem[]>([]);
   const [processingState, setProcessingState] = useState<ProcessingState>({ status: AppState.IDLE });
+
+  useEffect(() => {
+    checkApiKey();
+  }, []);
+
+  const checkApiKey = async () => {
+    if (window.aistudio && window.aistudio.hasSelectedApiKey) {
+      const hasKey = await window.aistudio.hasSelectedApiKey();
+      setHasApiKey(hasKey);
+    } else {
+      // Fallback for local dev or non-studio environments
+      setHasApiKey(true); 
+    }
+    setIsCheckingKey(false);
+  };
+
+  const handleConnectApiKey = async () => {
+    if (window.aistudio && window.aistudio.openSelectKey) {
+      await window.aistudio.openSelectKey();
+      // Optimistically set true, but re-checking would be safer in a real app
+      setHasApiKey(true);
+    }
+  };
 
   const handleImageUpload = (base64: string) => {
     setOriginalImage(base64);
@@ -59,15 +87,12 @@ const App: React.FC = () => {
       }
 
       // Step 1: Restyle
-      // We always use the ORIGINAL image as the source to prevent degradation, 
-      // but we apply the current refinement instructions to the prompt.
       const newImage = await restyleRoom(originalImage, prompt);
       setGeneratedImage(newImage);
 
       // Step 2: Data Mining
       setProcessingState({ status: AppState.MINING, message: "Finding furniture matches..." });
       
-      // If in PARTIAL mode, focus mining only on the added items
       const miningFocus = mode === 'PARTIAL' ? itemsToAdd : undefined;
       const items = await mineFurnitureData(newImage, miningFocus);
       
@@ -80,14 +105,14 @@ const App: React.FC = () => {
       
       if (error instanceof Error) {
         const msg = error.message.toLowerCase();
-        if (msg.includes("api key") || msg.includes("unauthenticated")) {
-           errorMessage = "Configuration Error: API Key is missing or invalid.";
-        } else if (msg.includes("403") || msg.includes("permission")) {
-           errorMessage = "Access Denied: The provided API Key is invalid or expired.";
+        // Handle the case where the user reset the key mid-session
+        if (msg.includes("api key") || msg.includes("requested entity was not found") || msg.includes("403")) {
+           errorMessage = "API Key Missing or Invalid. Please reconnect your key.";
+           setHasApiKey(false); // Force them to re-select
         } else if (msg.includes("503") || msg.includes("overloaded")) {
            errorMessage = "Service Overloaded: The AI is busy. Please try again in a moment.";
         } else {
-           errorMessage += ` (Details: ${error.message})`;
+           errorMessage = `Error: ${error.message}`;
         }
       }
       
@@ -98,12 +123,42 @@ const App: React.FC = () => {
     }
   };
 
-  // Triggered when user clicks "Update Design" in the refinement section
   const handleRefine = () => {
     handleGenerate();
   };
 
   const isProcessing = processingState.status === AppState.GENERATING || processingState.status === AppState.MINING;
+
+  if (isCheckingKey) {
+    return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin w-8 h-8 border-4 border-indigo-600 rounded-full border-t-transparent"></div></div>;
+  }
+
+  // API Key Gate Screen
+  if (!hasApiKey) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center space-y-6">
+          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto text-indigo-600">
+            <Key size={32} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Dzign.io</h1>
+            <p className="text-gray-500">To start generating interior designs, please connect your Google Gemini API Key.</p>
+          </div>
+          <Button onClick={handleConnectApiKey} className="w-full justify-center">
+            Connect API Key
+          </Button>
+          <p className="text-xs text-gray-400">
+            Powered by Google Gemini models.
+            <br />
+            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="underline hover:text-indigo-600">
+              Billing Information
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -192,7 +247,7 @@ const App: React.FC = () => {
                 </div>
               )}
 
-              {/* Style Selection (Now available for BOTH modes) */}
+              {/* Style Selection */}
               <div className="animate-fade-in">
                   {mode === 'PARTIAL' && (
                     <label className="block text-sm font-bold text-gray-700 mb-2">Choose Item Style</label>
@@ -230,6 +285,19 @@ const App: React.FC = () => {
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 text-red-700 text-sm items-start animate-fade-in">
                 <AlertCircle size={20} className="shrink-0 mt-0.5" />
                 <p className="break-words w-full font-medium">{processingState.message}</p>
+                <Button 
+                  variant="secondary" 
+                  className="text-xs py-1 px-3 h-auto ml-auto whitespace-nowrap"
+                  onClick={() => { 
+                    // If it's an API error, try reopening the key dialog
+                    if (processingState.message?.includes("API")) {
+                       handleConnectApiKey();
+                    }
+                    setProcessingState({ status: AppState.IDLE });
+                  }}
+                >
+                  Retry / Fix
+                </Button>
               </div>
             )}
 
@@ -269,7 +337,7 @@ const App: React.FC = () => {
                 )}
              </section>
 
-             {/* Post-Generation Refinement (NEW) */}
+             {/* Post-Generation Refinement */}
              {generatedImage && (
                <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm animate-fade-in-up">
                  <div className="flex items-center gap-2 mb-4 text-gray-900 font-bold">
