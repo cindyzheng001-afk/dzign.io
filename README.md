@@ -9,9 +9,11 @@ An AI-powered interior design tool built with React, Vite, and the Google Gemini
     npm install
     ```
 
-2.  **Setup API Key:**
-    *   Open the `.env` file in the root directory.
-    *   Add your Gemini API key: `VITE_API_KEY=your_key_here`.
+2.  **Configure API Key:**
+    *   Open the **`.env`** file in the root directory.
+    *   Paste your Google Gemini API key next to `VITE_API_KEY=`.
+    *   Example: `VITE_API_KEY=AIzaSy...`
+    *   *(If you don't have a key, get one here: https://aistudio.google.com/app/apikey)*
 
 3.  **Run the App:**
     ```bash

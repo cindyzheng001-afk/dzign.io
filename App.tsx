@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { Button } from './components/Button';
 import { ImageUploader } from './components/ImageUploader';
@@ -8,13 +8,9 @@ import { ComparisonSlider } from './components/ComparisonSlider';
 import { DESIGN_STYLES, buildMakeoverPrompt, buildPartialPrompt } from './constants';
 import { AppState, FurnitureItem, ProcessingState, DesignMode } from './types';
 import { restyleRoom, mineFurnitureData } from './services/geminiService';
-import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, RefreshCw, Key } from 'lucide-react';
+import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, RefreshCw } from 'lucide-react';
 
 const App: React.FC = () => {
-  // API Key State
-  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
-  const [isCheckingKey, setIsCheckingKey] = useState<boolean>(true);
-
   // App Data State
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -29,29 +25,6 @@ const App: React.FC = () => {
 
   const [shoppingItems, setShoppingItems] = useState<FurnitureItem[]>([]);
   const [processingState, setProcessingState] = useState<ProcessingState>({ status: AppState.IDLE });
-
-  useEffect(() => {
-    checkApiKey();
-  }, []);
-
-  const checkApiKey = async () => {
-    if (window.aistudio && window.aistudio.hasSelectedApiKey) {
-      const hasKey = await window.aistudio.hasSelectedApiKey();
-      setHasApiKey(hasKey);
-    } else {
-      // Fallback for local dev or non-studio environments
-      setHasApiKey(true); 
-    }
-    setIsCheckingKey(false);
-  };
-
-  const handleConnectApiKey = async () => {
-    if (window.aistudio && window.aistudio.openSelectKey) {
-      await window.aistudio.openSelectKey();
-      // Optimistically set true, but re-checking would be safer in a real app
-      setHasApiKey(true);
-    }
-  };
 
   const handleImageUpload = (base64: string) => {
     setOriginalImage(base64);
@@ -101,15 +74,17 @@ const App: React.FC = () => {
       setProcessingState({ status: AppState.COMPLETE });
     } catch (error) {
       console.error(error);
-      let errorMessage = "Oops! The AI had a creative block. Please check your API Key or try again.";
+      let errorMessage = "Oops! The AI had a creative block. Please try again.";
       
       if (error instanceof Error) {
-        const msg = error.message.toLowerCase();
-        // Handle the case where the user reset the key mid-session
-        if (msg.includes("api key") || msg.includes("requested entity was not found") || msg.includes("403")) {
-           errorMessage = "API Key Missing or Invalid. Please reconnect your key.";
-           setHasApiKey(false); // Force them to re-select
-        } else if (msg.includes("503") || msg.includes("overloaded")) {
+        const msg = error.message;
+        const lowerMsg = msg.toLowerCase();
+        
+        if (msg === 'API_KEY_MISSING') {
+          errorMessage = "Config Error: API Key not found. Please ensure 'API_KEY' or 'VITE_API_KEY' is set in your environment variables or .env file.";
+        } else if (lowerMsg.includes("403") || lowerMsg.includes("api key")) {
+           errorMessage = "Access Denied: The provided API Key is invalid or expired. Please check your configuration.";
+        } else if (lowerMsg.includes("503") || lowerMsg.includes("overloaded")) {
            errorMessage = "Service Overloaded: The AI is busy. Please try again in a moment.";
         } else {
            errorMessage = `Error: ${error.message}`;
@@ -128,37 +103,6 @@ const App: React.FC = () => {
   };
 
   const isProcessing = processingState.status === AppState.GENERATING || processingState.status === AppState.MINING;
-
-  if (isCheckingKey) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin w-8 h-8 border-4 border-indigo-600 rounded-full border-t-transparent"></div></div>;
-  }
-
-  // API Key Gate Screen
-  if (!hasApiKey) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center space-y-6">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto text-indigo-600">
-            <Key size={32} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Dzign.io</h1>
-            <p className="text-gray-500">To start generating interior designs, please connect your Google Gemini API Key.</p>
-          </div>
-          <Button onClick={handleConnectApiKey} className="w-full justify-center">
-            Connect API Key
-          </Button>
-          <p className="text-xs text-gray-400">
-            Powered by Google Gemini models.
-            <br />
-            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noreferrer" className="underline hover:text-indigo-600">
-              Billing Information
-            </a>
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -289,14 +233,10 @@ const App: React.FC = () => {
                   variant="secondary" 
                   className="text-xs py-1 px-3 h-auto ml-auto whitespace-nowrap"
                   onClick={() => { 
-                    // If it's an API error, try reopening the key dialog
-                    if (processingState.message?.includes("API")) {
-                       handleConnectApiKey();
-                    }
                     setProcessingState({ status: AppState.IDLE });
                   }}
                 >
-                  Retry / Fix
+                  Dismiss
                 </Button>
               </div>
             )}

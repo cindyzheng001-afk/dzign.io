@@ -58,11 +58,12 @@ const compressImage = async (base64String: string): Promise<string> => {
 
 export const restyleRoom = async (base64Image: string, prompt: string): Promise<string> => {
   try {
-    // Always create a new client to pick up the latest env var (handling dynamic key selection)
     const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-       throw new Error("API Key is missing. Please select an API Key using the button on the home screen.");
+    if (!apiKey || apiKey.trim() === '') {
+       // Throw a specific string we can catch in the UI
+       throw new Error("API_KEY_MISSING");
     }
+    
     const client = new GoogleGenAI({ apiKey });
 
     // Optimize image before sending
@@ -95,12 +96,8 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
 
 export const mineFurnitureData = async (generatedBase64Image: string, focusItems?: string): Promise<FurnitureItem[]> => {
   try {
-    // Always create a new client
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-       // If we got here, restyleRoom probably already failed or succeeded, 
-       // but we still need a key for this 2nd call.
-       console.warn("Skipping mining due to missing API key");
        return [];
     }
     const client = new GoogleGenAI({ apiKey });
@@ -139,7 +136,6 @@ export const mineFurnitureData = async (generatedBase64Image: string, focusItems
     return JSON.parse(response.text || "[]") as FurnitureItem[];
   } catch (error) {
     console.error("Data mining failed:", error);
-    // Return empty array rather than throwing to allow the main image to still show
     return [];
   }
 };

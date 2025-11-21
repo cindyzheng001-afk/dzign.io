@@ -5,15 +5,22 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
-  // We cast process to any to avoid TypeScript errors if @types/node is missing.
-  const env = loadEnv(mode, (process as any).cwd(), '');
+  const env = loadEnv(mode, process.cwd(), '');
+
+  // aggressively search for the API key in various common environment variable names
+  const apiKey = env.API_KEY || 
+                 env.VITE_API_KEY || 
+                 env.GOOGLE_API_KEY || 
+                 env.GEMINI_API_KEY || 
+                 env.GOOGLE_GENAI_API_KEY ||
+                 process.env.API_KEY ||
+                 process.env.VITE_API_KEY;
 
   return {
     plugins: [react()],
     define: {
       // This ensures process.env.API_KEY is available in your code
-      // It checks for API_KEY (Netlify/System) first, then VITE_API_KEY (Local .env)
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || env.VITE_API_KEY),
+      'process.env.API_KEY': JSON.stringify(apiKey),
     },
   }
 })
