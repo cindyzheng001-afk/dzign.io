@@ -36,7 +36,7 @@ const getBase64Data = (base64String: string) => {
 
 /**
  * Compresses and resizes an image to ensure it fits within API payload limits.
- * Max dimension set to 1024px.
+ * Max dimension set to 800px to ensure high reliability and prevent timeouts.
  */
 const compressImage = async (base64String: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -45,7 +45,7 @@ const compressImage = async (base64String: string): Promise<string> => {
       const canvas = document.createElement('canvas');
       let width = img.width;
       let height = img.height;
-      const maxDim = 1024;
+      const maxDim = 800; // Reduced from 1024 to 800 for better stability
 
       if (width > maxDim || height > maxDim) {
         if (width > height) {
@@ -66,8 +66,8 @@ const compressImage = async (base64String: string): Promise<string> => {
       }
       
       ctx.drawImage(img, 0, 0, width, height);
-      // Convert to JPEG with 0.8 quality for good balance
-      resolve(canvas.toDataURL('image/jpeg', 0.8));
+      // Convert to JPEG with 0.7 quality for reduced payload size
+      resolve(canvas.toDataURL('image/jpeg', 0.7));
     };
     img.onerror = (err) => reject(err);
     img.src = base64String;
@@ -101,7 +101,7 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
         }
       }
     }
-    throw new Error("No image generated.");
+    throw new Error("No image generated. The model may have been blocked by safety settings.");
   } catch (error) {
     console.error("Restyling failed:", error);
     throw error;
@@ -145,6 +145,7 @@ export const mineFurnitureData = async (generatedBase64Image: string, focusItems
     return JSON.parse(response.text || "[]") as FurnitureItem[];
   } catch (error) {
     console.error("Data mining failed:", error);
+    // Return empty array rather than throwing to allow the main image to still show
     return [];
   }
 };

@@ -43,7 +43,13 @@ export const DESIGN_STYLES: DesignStyle[] = [
  * Constructs the prompt for a Full Room Makeover
  */
 export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '') => {
-  let basePrompt = `Redesign this room to match the ${styleLabel} style. Keep the original room layout but change the furniture and colors to match the ${styleLabel} aesthetic. Photorealistic, 8k resolution, interior design photography.`;
+  let basePrompt = `Redesign this room to match the ${styleLabel} style. Keep the original room layout but change the furniture and colors to match the ${styleLabel} aesthetic. Photorealistic, 8k resolution, interior design photography.
+  
+  IMPORTANT STRUCTURAL CONSTRAINTS:
+  1. DO NOT cover windows or doors with artwork, furniture, or decor. Windows must remain clear and transparent.
+  2. DO NOT change the size or position of structural elements (walls, windows, doorways).
+  3. Maintain the original perspective and lighting direction.
+  `;
   
   // Smart flooring preservation logic for makeover mode
   const lowerInstruction = refinement.toLowerCase();
@@ -88,6 +94,7 @@ export const buildPartialPrompt = (itemsToAdd: string, styleLabel: string, refin
      - DO NOT change the Gallery Wall or existing Art.
      - DO NOT change the Sofa or main furniture layout.
      - DO NOT resize the TV or screens.
+     - DO NOT place items over windows or block doorways.
   3. IF adding an item (e.g. "add a plant"), find an EMPTY spot and place it there. Do not replace existing furniture.
   4. IF editing an item (e.g. "green wall"), identify that specific item and change ONLY its color/texture. Keep the geometry and surrounding objects identical.
   

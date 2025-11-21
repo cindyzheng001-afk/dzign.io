@@ -76,9 +76,14 @@ const App: React.FC = () => {
       setProcessingState({ status: AppState.COMPLETE });
     } catch (error) {
       console.error(error);
+      let errorMessage = "Oops! The AI had a creative block. Please check your API Key or try again.";
+      if (error instanceof Error) {
+        // Append technical details if available to help debug
+        errorMessage += ` (Details: ${error.message})`;
+      }
       setProcessingState({ 
         status: AppState.ERROR, 
-        message: "Oops! The AI had a creative block. Please check your API Key or try again." 
+        message: errorMessage
       });
     }
   };
@@ -214,7 +219,7 @@ const App: React.FC = () => {
              {processingState.status === AppState.ERROR && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 text-red-700 text-sm items-start">
                 <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                <p>{processingState.message}</p>
+                <p className="break-all">{processingState.message}</p>
               </div>
             )}
 
