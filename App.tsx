@@ -8,7 +8,7 @@ import { ComparisonSlider } from './components/ComparisonSlider';
 import { DESIGN_STYLES, buildMakeoverPrompt, buildPartialPrompt } from './constants';
 import { AppState, FurnitureItem, ProcessingState, DesignMode } from './types';
 import { restyleRoom, mineFurnitureData } from './services/geminiService';
-import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, FileKey } from 'lucide-react';
+import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, FileKey, Sparkles } from 'lucide-react';
 
 const App: React.FC = () => {
   // App Data State
@@ -54,8 +54,13 @@ const App: React.FC = () => {
     if (!originalImage) return;
 
     setProcessingState({ status: AppState.GENERATING, message: mode === 'MAKEOVER' ? "Reimagining your space..." : "Adding your items..." });
-    setGeneratedImage(null);
-    setShoppingItems([]);
+    
+    // Only clear generated image if we aren't refining (optional UX choice, but clearer to reset)
+    // If refining, we might want to keep the old one until new one arrives, but for simplicity we reset.
+    if (!refinementInstruction) {
+        setGeneratedImage(null);
+        setShoppingItems([]);
+    }
 
     try {
       let prompt = "";
@@ -299,6 +304,36 @@ const App: React.FC = () => {
                   </div>
                 )}
              </section>
+
+             {/* Refinement Section (NEW) */}
+             {generatedImage && (
+                <section className="bg-white rounded-3xl p-6 md:p-8 shadow-sm animate-fade-in border border-gray-100">
+                   <div className="flex items-center gap-3 mb-4">
+                     <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                       <Sparkles size={20} />
+                     </div>
+                     <h3 className="text-2xl font-bold text-gray-900">Refine Result</h3>
+                   </div>
+                   <div className="flex flex-col sm:flex-row gap-3">
+                      <input 
+                        type="text" 
+                        value={refinementInstruction}
+                        onChange={(e) => setRefinementInstruction(e.target.value)}
+                        placeholder="e.g., Make the rug blue, remove the lamp, make it brighter..."
+                        className="flex-1 p-4 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-0 outline-none transition-colors"
+                        onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+                      />
+                      <Button 
+                        onClick={handleGenerate}
+                        disabled={isProcessing || !refinementInstruction.trim()}
+                        isLoading={isProcessing}
+                        className="shrink-0"
+                      >
+                        Refine Design
+                      </Button>
+                   </div>
+                </section>
+             )}
 
              {/* Shopping List */}
              {shoppingItems.length > 0 && (

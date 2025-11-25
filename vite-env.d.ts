@@ -7,9 +7,15 @@ declare module '*.svg';
 declare module '*.gif';
 
 // Ensure process.env is typed for the API key usage
-declare var process: {
-  env: {
+// We augment the existing NodeJS.ProcessEnv interface rather than redeclaring the global process variable.
+// This prevents "Cannot redeclare block-scoped variable" errors and ensures process.cwd() is recognized in vite.config.ts.
+declare namespace NodeJS {
+  interface Process {
+    cwd(): string;
+    env: ProcessEnv;
+  }
+  interface ProcessEnv {
     API_KEY: string;
     [key: string]: string | undefined;
   }
-};
+}

@@ -4,7 +4,8 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
-  const env = loadEnv(mode, process.cwd(), '');
+  // We cast process to any to avoid TS errors when @types/node is not fully loaded
+  const env = loadEnv(mode, (process as any).cwd(), '');
 
   // Capture the API key from the specific VITE_API_KEY variable.
   // We fallback to process.env for CI/CD environments like Netlify.

@@ -43,19 +43,24 @@ export const DESIGN_STYLES: DesignStyle[] = [
  * Constructs the prompt for a Full Room Makeover
  */
 export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '') => {
-  let basePrompt = `Redesign this room to match the ${styleLabel} style. Keep the original room layout but change the furniture and colors to match the ${styleLabel} aesthetic. Photorealistic, 8k resolution, interior design photography.
+  let basePrompt = `Role: Expert Interior Architect. Task: Redesign this room to match the ${styleLabel} style.
   
-  IMPORTANT STRUCTURAL CONSTRAINTS:
-  1. DO NOT cover windows or doors with artwork, furniture, or decor. Windows must remain clear and transparent.
-  2. WALLS are for art. WINDOWS are for light. Do not confuse them.
-  3. DO NOT change the size or position of structural elements (walls, windows, doorways).
-  4. Maintain the original perspective and lighting direction.
+  CRITICAL ARCHITECTURAL RULES (STRICT ENFORCEMENT):
+  1. WINDOWS ARE FORBIDDEN ZONES: You must NOT place any artwork, frames, shelving, or furniture covering any part of a window. Windows must remain 100% clear glass looking outside.
+  2. WALLS vs WINDOWS: Apply wall decor, paintings, and frames ONLY to solid, opaque walls. Never on glass.
+  3. STRUCTURAL INTEGRITY: Keep the exact shape, size, and position of all windows, doors, and walls. Do not merge windows or turn them into walls.
+  4. Perspective: Maintain the original camera angle and lighting direction.
+  
+  Design Execution:
+  - Change furniture and colors to match the ${styleLabel} aesthetic.
+  - Photorealistic, 8k resolution, architectural photography.
   
   NEGATIVE PROMPT (STRICTLY FORBIDDEN):
   - NO art, posters, or frames on glass windows.
   - NO furniture blocking doorways.
+  - NO resizing windows.
   - NO blurry or distorted furniture.
-  - NO text or watermarks in the image.
+  - NO text or watermarks.
   `;
   
   // Smart flooring preservation logic for makeover mode
@@ -69,11 +74,11 @@ export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '')
                            lowerInstruction.includes('rug');
 
   if (!mentionsFlooring) {
-    basePrompt += " Keep the original flooring material and color unchanged.";
+    basePrompt += " Preservation: Keep the original flooring material and color unchanged.";
   }
   
   if (refinement && refinement.trim().length > 0) {
-    basePrompt += `\n\nIMPORTANT SPECIFIC REQUIREMENT: ${refinement}. Focus on this request.`;
+    basePrompt += `\n\nUSER PRIORITY REQUEST: "${refinement}". Prioritize this over standard style rules.`;
   }
   
   return basePrompt;
@@ -95,13 +100,13 @@ export const buildPartialPrompt = (itemsToAdd: string, styleLabel: string, refin
   
   CRITICAL PRESERVATION RULES (STRICT ADHERENCE REQUIRED):
   1. PRESERVE 99% OF THE ORIGINAL IMAGE PIXELS. This is NOT a redesign. This is a targeted edit.
-  2. DO NOT CHANGE THE FOLLOWING UNDER ANY CIRCUMSTANCES (unless the user explicitly asks to replace them):
+  2. WINDOW PROTECTION: Do NOT place the new items over windows. Windows must remain clear.
+  3. DO NOT CHANGE THE FOLLOWING UNDER ANY CIRCUMSTANCES (unless the user explicitly asks to replace them):
      - DO NOT change the Coffee Table.
      - DO NOT change the Rugs (do NOT add a rug if not asked).
      - DO NOT change the Gallery Wall or existing Art.
      - DO NOT change the Sofa or main furniture layout.
      - DO NOT resize the TV or screens.
-     - DO NOT place items over windows or block doorways.
   
   NEGATIVE PROMPT (STRICTLY FORBIDDEN):
   - NO art or decor on windows.
