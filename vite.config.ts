@@ -7,15 +7,11 @@ export default defineConfig(({ mode }) => {
   // We cast process to any to avoid TS errors when @types/node is not fully loaded
   const env = loadEnv(mode, (process as any).cwd(), '');
 
-  // Capture the API key from the specific VITE_API_KEY variable.
-  // We fallback to process.env for CI/CD environments like Netlify.
   const apiKey = env.VITE_API_KEY || process.env.VITE_API_KEY || "";
 
   return {
     plugins: [react()],
     define: {
-      // This ensures process.env.API_KEY is available in your code
-      // We stringify it so it is inserted as a string literal in the client code
       'process.env.API_KEY': JSON.stringify(apiKey),
     },
   }

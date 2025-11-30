@@ -8,7 +8,7 @@ import { ComparisonSlider } from './components/ComparisonSlider';
 import { DESIGN_STYLES, buildMakeoverPrompt, buildPartialPrompt } from './constants';
 import { AppState, FurnitureItem, ProcessingState, DesignMode } from './types';
 import { restyleRoom, mineFurnitureData } from './services/geminiService';
-import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, FileKey, Sparkles } from 'lucide-react';
+import { Wand2, AlertCircle, ArrowRight, Layers, Armchair, Sparkles } from 'lucide-react';
 
 const App: React.FC = () => {
   // App Data State
@@ -101,11 +101,7 @@ const App: React.FC = () => {
         const msg = error.message;
         const lowerMsg = msg.toLowerCase();
         
-        if (msg === 'API_KEY_MISSING') {
-          errorMessage = "API_KEY_MISSING"; // Special code to render the help UI
-        } else if (lowerMsg.includes("requested entity was not found") || lowerMsg.includes("403") || lowerMsg.includes("api key")) {
-           errorMessage = "Authentication Error: API Key is invalid or expired. Please check your .env file.";
-        } else if (lowerMsg.includes("503") || lowerMsg.includes("overloaded")) {
+        if (lowerMsg.includes("503") || lowerMsg.includes("overloaded")) {
            errorMessage = "Service Busy: The AI is momentarily overloaded. Please try again.";
         } else {
            errorMessage = `Error: ${error.message}`;
@@ -120,7 +116,6 @@ const App: React.FC = () => {
   };
 
   const isProcessing = processingState.status === AppState.GENERATING || processingState.status === AppState.MINING;
-  const isApiKeyError = processingState.message === "API_KEY_MISSING";
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -244,26 +239,11 @@ const App: React.FC = () => {
             </div>
             
              {processingState.status === AppState.ERROR && (
-              <div className={`p-4 rounded-xl flex flex-col gap-2 animate-fade-in ${isApiKeyError ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-200'}`}>
-                {isApiKeyError ? (
-                  <div className="space-y-3">
-                    <div className="flex gap-3 text-amber-800 text-sm items-start font-semibold">
-                      <FileKey size={20} className="shrink-0 mt-0.5" />
-                      <p>Missing API Key</p>
-                    </div>
-                    <p className="text-xs text-amber-700">
-                      To use the AI features, you need to create a file named <code className="bg-amber-100 px-1 py-0.5 rounded font-mono text-amber-900">.env</code> in your project folder with the following content:
-                    </p>
-                    <div className="bg-white p-3 rounded border border-amber-200 font-mono text-xs text-gray-600 overflow-x-auto">
-                      VITE_API_KEY=AIzaSy...
-                    </div>
-                  </div>
-                ) : (
+              <div className="p-4 rounded-xl flex flex-col gap-2 animate-fade-in bg-red-50 border border-red-200">
                   <div className="flex gap-3 text-red-700 text-sm items-start">
                     <AlertCircle size={20} className="shrink-0 mt-0.5" />
                     <p className="break-words w-full font-medium">{processingState.message}</p>
                   </div>
-                )}
                 
                 <div className="flex gap-2 justify-end">
                    <Button 
