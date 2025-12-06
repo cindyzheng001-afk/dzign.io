@@ -1,4 +1,4 @@
-import { DesignStyle } from './types';
+import { DesignStyle, ColorItem } from './types';
 
 export const DESIGN_STYLES: DesignStyle[] = [
   { 
@@ -36,6 +36,92 @@ export const DESIGN_STYLES: DesignStyle[] = [
     label: 'Mid-Century Modern', 
     description: 'Retro vibes, organic curves, and teak wood.', 
     color: 'bg-amber-700' 
+  },
+  { 
+    id: 'industrial', 
+    label: 'Industrial Loft', 
+    description: 'Exposed brick, metal accents, concrete, and raw materials.', 
+    color: 'bg-gray-800' 
+  },
+  { 
+    id: 'scandi', 
+    label: 'Scandinavian', 
+    description: 'Hygge, functionality, white walls, and light wood.', 
+    color: 'bg-emerald-700' 
+  }
+];
+
+export const SURPRISE_PROMPTS = [
+  "Cyberpunk Neon Interior Decor",
+  "Wes Anderson Movie Set Pastel Style",
+  "Vampire Gothic Mansion Interior",
+  "1970s Disco Fever Interior",
+  "Sci-Fi Space Station Interior Design",
+  "Atlantis Themed Bedroom Decor",
+  "Forest Witch Cottagecore Interior",
+  "Maximalist Barbiecore Pink Decor"
+];
+
+export const PREDEFINED_PALETTES: { name: string; colors: ColorItem[] }[] = [
+  {
+    name: "Earthy Warmth",
+    colors: [
+      { hex: "#8D6E63", name: "Cocoa" },
+      { hex: "#D7CCC8", name: "Almond" },
+      { hex: "#EFEBE9", name: "Soft Linen" },
+      { hex: "#5D4037", name: "Espresso" },
+      { hex: "#FFAB91", name: "Terracotta" }
+    ]
+  },
+  {
+    name: "Ocean Calm",
+    colors: [
+      { hex: "#006064", name: "Deep Cyan" },
+      { hex: "#B2EBF2", name: "Sea Foam" },
+      { hex: "#0097A7", name: "Teal" },
+      { hex: "#FFFFFF", name: "White Foam" },
+      { hex: "#4DD0E1", name: "Sky Blue" }
+    ]
+  },
+  {
+    name: "Moody Industrial",
+    colors: [
+      { hex: "#212121", name: "Charcoal" },
+      { hex: "#757575", name: "Concrete" },
+      { hex: "#BDBDBD", name: "Silver" },
+      { hex: "#BF360C", name: "Rust" },
+      { hex: "#3E2723", name: "Dark Wood" }
+    ]
+  },
+  {
+    name: "Pastel Dream",
+    colors: [
+      { hex: "#F8BBD0", name: "Pink Lace" },
+      { hex: "#E1BEE7", name: "Thistle" },
+      { hex: "#C5CAE9", name: "Periwinkle" },
+      { hex: "#B2DFDB", name: "Mint" },
+      { hex: "#FFF9C4", name: "Lemon Chiffon" }
+    ]
+  },
+  {
+    name: "Forest Retreat",
+    colors: [
+      { hex: "#1B5E20", name: "Dark Green" },
+      { hex: "#4CAF50", name: "Fern" },
+      { hex: "#81C784", name: "Sage" },
+      { hex: "#3E2723", name: "Bark" },
+      { hex: "#F5F5F5", name: "Cloud" }
+    ]
+  },
+  {
+    name: "Midnight Luxe",
+    colors: [
+      { hex: "#0D47A1", name: "Royal Blue" },
+      { hex: "#FFD700", name: "Gold" },
+      { hex: "#1A237E", name: "Navy" },
+      { hex: "#EEEEEE", name: "Silk" },
+      { hex: "#000000", name: "Onyx" }
+    ]
   }
 ];
 
@@ -43,24 +129,24 @@ export const DESIGN_STYLES: DesignStyle[] = [
  * Constructs the prompt for a Full Room Makeover
  */
 export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '') => {
-  let basePrompt = `Role: Expert Interior Architect. Task: Redesign this room to match the ${styleLabel} style.
+  let basePrompt = `Role: Virtual Stager (Furniture Replacement Only).
+  Input: An image of a room.
+  Goal: Generate a photorealistic image of the EXACT SAME room with "${styleLabel}" furniture and decor.
   
-  CRITICAL ARCHITECTURAL RULES (STRICT ENFORCEMENT):
-  1. WINDOWS ARE FORBIDDEN ZONES: You must NOT place any artwork, frames, shelving, or furniture covering any part of a window. Windows must remain 100% clear glass looking outside.
-  2. WALLS vs WINDOWS: Apply wall decor, paintings, and frames ONLY to solid, opaque walls. Never on glass.
-  3. STRUCTURAL INTEGRITY: Keep the exact shape, size, and position of all windows, doors, and walls. Do not merge windows or turn them into walls.
-  4. Perspective: Maintain the original camera angle and lighting direction.
+  🚧 HARD ARCHITECTURAL CONSTRAINTS (CRITICAL):
+  1. **CEILING PROTECTION (HIGHEST PRIORITY)**: The ceiling structure must remain UNTOUCHED. Preserve all beams, cornices, molding, skylights, and the ceiling height/slope. Do NOT smooth out textured ceilings or remove structural elements.
+  2. **ABSOLUTELY NO NEW WINDOWS**: Walls must remain solid. 
+  3. **PRESERVE STRUCTURE**: Do NOT add, remove, or move walls, doors, or beams.
+  4. **WINDOW VIEW PROTECTION (MANDATORY)**: The scenery, weather, lighting, and objects visible THROUGH the windows must remain 100% IDENTICAL to the original image. Do not change the outside world. Treat the window glass and the view behind it as a "protected mask" that cannot be repainted.
+  5. **LIGHTING**: Maintain the original direction of light coming from windows.
   
-  Design Execution:
-  - Change furniture and colors to match the ${styleLabel} aesthetic.
-  - Photorealistic, 8k resolution, architectural photography.
+  ✅ ALLOWED CHANGES (DECOR ONLY):
+  - Replace furniture (sofas, tables, chairs).
+  - Change soft furnishings (rugs, curtains, cushions).
+  - Change wall finishes (paint, wallpaper) - but keep the wall flat and solid.
+  - Update light fixtures (chandeliers) but keep the mounting point.
   
-  NEGATIVE PROMPT (STRICTLY FORBIDDEN):
-  - NO art, posters, or frames on glass windows.
-  - NO furniture blocking doorways.
-  - NO resizing windows.
-  - NO blurry or distorted furniture.
-  - NO text or watermarks.
+  The room's shell (CEILING, WALLS, FLOOR SHAPE, WINDOWS, and EXTERIOR VIEW) is LOCKED and READ-ONLY.
   `;
   
   // Smart flooring preservation logic for makeover mode
@@ -74,11 +160,19 @@ export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '')
                            lowerInstruction.includes('rug');
 
   if (!mentionsFlooring) {
-    basePrompt += " Preservation: Keep the original flooring material and color unchanged.";
+    basePrompt += " PRESERVATION: Keep the original flooring material and color unchanged unless it clashes heavily.";
   }
   
   if (refinement && refinement.trim().length > 0) {
-    basePrompt += `\n\nUSER PRIORITY REQUEST: "${refinement}". Prioritize this over standard style rules.`;
+    // We add explicit constraints to the refinement to prevent "Surprise" themes from leaking outside
+    basePrompt += `\n\nUSER THEME/REFINEMENT: "${refinement}".
+    
+    IMPORTANT: Apply the vibe of "${refinement}" to the INTERIOR FURNITURE AND DECOR ONLY. 
+    - DO NOT change the outside environment or view through windows.
+    - If the theme suggests a different location (e.g. underwater, space, forest), IGNORE that location for the exterior view. Keep the original exterior view.
+    - DO NOT add new windows to match the theme.
+    - DO NOT change the ceiling structure to match the theme (e.g. do not turn a flat ceiling into a cave or spaceship roof).
+    `;
   }
   
   return basePrompt;
@@ -92,41 +186,66 @@ export const buildPartialPrompt = (itemsToAdd: string, styleLabel: string, refin
     ? `Add "${itemsToAdd}" and specifically "${refinement}"`
     : `Add "${itemsToAdd}"`;
 
-  let basePrompt = `Task: Precision In-Painting / Object Insertion.
+  let basePrompt = `Task: Realistic In-Painting / Object Insertion.
   
-  The user wants to modify ONLY specific parts of the image.
-  USER REQUEST: ${requestDescription}.
-  STYLE context for new items: ${styleLabel}.
+  User Request: ${requestDescription}.
+  Style Context: ${styleLabel}.
   
-  CRITICAL PRESERVATION RULES (STRICT ADHERENCE REQUIRED):
-  1. PRESERVE 99% OF THE ORIGINAL IMAGE PIXELS. This is NOT a redesign. This is a targeted edit.
-  2. WINDOW PROTECTION: Do NOT place the new items over windows. Windows must remain clear.
-  3. DO NOT CHANGE THE FOLLOWING UNDER ANY CIRCUMSTANCES (unless the user explicitly asks to replace them):
-     - DO NOT change the Coffee Table.
-     - DO NOT change the Rugs (do NOT add a rug if not asked).
-     - DO NOT change the Gallery Wall or existing Art.
-     - DO NOT change the Sofa or main furniture layout.
-     - DO NOT resize the TV or screens.
+  STRICT RULES:
+  1. DO NOT CHANGE THE ROOM ARCHITECTURE.
+  2. **CEILING PRESERVATION**: Do not touch the ceiling, beams, or light fixtures unless asked.
+  3. **NO NEW WINDOWS**: Keep existing walls solid.
+  4. **PRESERVE OUTDOOR VIEW**: Do not modify what is seen through the windows.
+  5. Only add the requested items into the existing space.
   
-  NEGATIVE PROMPT (STRICTLY FORBIDDEN):
-  - NO art or decor on windows.
-  - NO changing the walls or ceiling.
-  
-  Output: A photorealistic image identical to the original except for the requested change.
+  Output: The original room with ONLY the requested items added.
   `;
 
   return basePrompt;
 };
 
 /**
+ * Constructs the prompt for Refining a generated image
+ */
+export const buildRefinementPrompt = (instruction: string) => {
+  return `Task: Image Editing / Inpainting.
+  
+  Input: An existing interior design image.
+  User Instruction: "${instruction}"
+  
+  STRICT EXECUTION RULES:
+  1. **MODIFY ONLY** the specific items or areas mentioned in the User Instruction.
+  2. **FREEZE EVERYTHING ELSE**: Do not change the style, furniture, lighting, flooring, or walls unless explicitly asked.
+  3. **PROTECT ARCHITECTURE**: The ceiling (beams, height), windows (view), and walls are FROZEN. Do not touch them.
+  4. **PROTECT OUTDOORS**: The view through any windows must remain bit-for-bit identical.
+  
+  Goal: Return the same image, but with the specific user tweak applied. High realism.
+  `;
+};
+
+/**
  * Constructs the mining prompt.
- * If focusItems is provided (Partial Mode), it asks the AI to only look for those items.
- * Otherwise (Makeover Mode), it asks for the key defining items of the room.
  */
 export const buildMiningPrompt = (focusItems?: string) => {
-  if (focusItems && focusItems.trim().length > 0) {
-    return `Analyze this interior design image. The user specifically requested to add the following items: "${focusItems}". Identify these specific items in the generated image. Return a JSON list containing the item name, its specific color/material as seen in the image, and a google search query string to buy it. Only include the items related to the user's request.`;
-  }
+  let prompt = `Analyze this interior design image. `;
   
-  return `Analyze this interior design image. Identify 5 distinct, key furniture or decor items that define the style. Return a JSON list containing the item name, its specific color/material, and a google search query string to buy it (e.g., "Modern blue velvet sofa buy online").`;
+  if (focusItems && focusItems.trim().length > 0) {
+    prompt += `The user specifically requested: "${focusItems}". 
+    CRITICAL: You MUST identify and list the specific furniture, decor, or plants that correspond to this request.
+    If the user asked for plants, list them. If they asked for a rug, list it.
+    
+    Generate a list of 5-8 items, prioritizing the user's requested items first, then other key design elements.`;
+  } else {
+    prompt += `Identify 5 distinct, key furniture or decor items that define the style. `;
+  }
+
+  prompt += `
+  ALSO, analyze the image to extract a cohesive Color Palette. Identify the 5 most dominant or accent colors used in the design.
+  
+  Return a JSON object with two arrays:
+  1. "furniture": A list containing the item name, its specific color/material, and a google search query.
+  2. "palette": A list of 5 colors, each with a "hex" code and a descriptive "name" (e.g., "Midnight Blue", "Sage Green").
+  `;
+  
+  return prompt;
 };

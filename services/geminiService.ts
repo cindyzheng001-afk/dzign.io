@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { FurnitureItem } from "../types";
+import { FurnitureItem, ColorItem, MiningResponse } from "../types";
 import { buildMiningPrompt } from "../constants";
 
 /**
@@ -18,7 +18,7 @@ const getBase64Data = (base64String: string) => {
 
 /**
  * Compresses and resizes an image to ensure it fits within API payload limits.
- * Max dimension set to 512px to ensure good quality while staying efficient.
+ * Increased max dimension to 1024px to preserve architectural details.
  */
 const compressImage = async (base64String: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -27,7 +27,7 @@ const compressImage = async (base64String: string): Promise<string> => {
       const canvas = document.createElement('canvas');
       let width = img.width;
       let height = img.height;
-      const maxDim = 512; 
+      const maxDim = 1024; // Increased from 512 to 1024 for better structural detail
 
       if (width > maxDim || height > maxDim) {
         if (width > height) {
@@ -47,9 +47,13 @@ const compressImage = async (base64String: string): Promise<string> => {
         return;
       }
       
+      // Use high quality interpolation
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      
       ctx.drawImage(img, 0, 0, width, height);
-      // Convert to JPEG with 0.6 quality for good balance
-      resolve(canvas.toDataURL('image/jpeg', 0.6));
+      // Convert to JPEG with 0.8 quality for better detail retention
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
     };
     img.onerror = (err) => reject(err);
     img.src = base64String;
@@ -77,6 +81,9 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
           { text: prompt },
         ],
       },
+      config: {
+        temperature: 0.2, // Low temperature to force strict adherence to structural constraints
+      }
     });
 
     // Check for generated images in the response
@@ -101,7 +108,7 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
   }
 };
 
-export const mineFurnitureData = async (base64Image: string, focusItems?: string): Promise<FurnitureItem[]> => {
+export const mineFurnitureData = async (base64Image: string, focusItems?: string): Promise<MiningResponse> => {
   try {
     const apiKey = process.env.API_KEY;
     if (!apiKey || apiKey.trim() === '') {
@@ -126,27 +133,43 @@ export const mineFurnitureData = async (base64Image: string, focusItems?: string
       config: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              itemName: { type: Type.STRING },
-              color: { type: Type.STRING },
-              searchQuery: { type: Type.STRING },
+          type: Type.OBJECT,
+          properties: {
+            furniture: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  itemName: { type: Type.STRING },
+                  color: { type: Type.STRING },
+                  searchQuery: { type: Type.STRING },
+                },
+                required: ["itemName", "color", "searchQuery"],
+              },
             },
-            required: ["itemName", "color", "searchQuery"],
+            palette: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  hex: { type: Type.STRING },
+                  name: { type: Type.STRING },
+                },
+                required: ["hex", "name"],
+              }
+            }
           },
+          required: ["furniture", "palette"]
         },
       }
     });
 
     if (response.text) {
-      return JSON.parse(response.text) as FurnitureItem[];
+      return JSON.parse(response.text) as MiningResponse;
     }
-    return [];
+    return { furniture: [], palette: [] };
   } catch (e) {
     console.error("Mining Data Error:", e);
-    // Return empty list on error rather than failing the whole flow
-    return [];
+    return { furniture: [], palette: [] };
   }
 };

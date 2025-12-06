@@ -7,7 +7,8 @@ export default defineConfig(({ mode }) => {
   // We cast process to any to avoid TS errors when @types/node is not fully loaded
   const env = loadEnv(mode, (process as any).cwd(), '');
 
-  const apiKey = env.VITE_API_KEY || process.env.VITE_API_KEY || "";
+  // Check env.API_KEY first (loaded from .env), then VITE_API_KEY, then system process.env
+  const apiKey = env.API_KEY || env.VITE_API_KEY || process.env.API_KEY || "";
 
   return {
     plugins: [react()],

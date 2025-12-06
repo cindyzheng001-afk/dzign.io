@@ -11,6 +11,16 @@ export interface FurnitureItem {
   searchQuery: string;
 }
 
+export interface ColorItem {
+  hex: string;
+  name: string;
+}
+
+export interface MiningResponse {
+  furniture: FurnitureItem[];
+  palette: ColorItem[];
+}
+
 export enum AppState {
   IDLE = 'IDLE',
   GENERATING = 'GENERATING',
