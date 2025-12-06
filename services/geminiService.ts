@@ -62,12 +62,7 @@ const compressImage = async (base64String: string): Promise<string> => {
 
 export const restyleRoom = async (base64Image: string, prompt: string): Promise<string> => {
   try {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey.trim() === '') {
-       throw new Error("Service configuration error.");
-    }
-    
-    const client = new GoogleGenAI({ apiKey });
+    const client = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
     // Optimize image before sending
     const optimizedImage = await compressImage(base64Image);
@@ -110,12 +105,8 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
 
 export const mineFurnitureData = async (base64Image: string, focusItems?: string): Promise<MiningResponse> => {
   try {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey.trim() === '') {
-       throw new Error("Service configuration error.");
-    }
+    const client = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    const client = new GoogleGenAI({ apiKey });
     const optimizedImage = await compressImage(base64Image);
     const { mimeType, data } = getBase64Data(optimizedImage);
     
