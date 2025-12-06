@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { FurnitureItem, ColorItem, MiningResponse } from "../types";
+import { MiningResponse } from "../types";
 import { buildMiningPrompt } from "../constants";
 
 /**
