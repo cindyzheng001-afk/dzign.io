@@ -52,8 +52,8 @@ const compressImage = async (base64String: string): Promise<string> => {
       ctx.imageSmoothingQuality = 'high';
       
       ctx.drawImage(img, 0, 0, width, height);
-      // Convert to JPEG with 0.8 quality for better detail retention
-      resolve(canvas.toDataURL('image/jpeg', 0.8));
+      // Convert to JPEG with 0.95 quality for better detail retention and fewer artifacts
+      resolve(canvas.toDataURL('image/jpeg', 0.95));
     };
     img.onerror = (err) => reject(err);
     img.src = base64String;

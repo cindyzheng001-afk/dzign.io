@@ -141,7 +141,7 @@ export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '')
   5. **LIGHTING**: Maintain the original direction of light coming from windows.
   
   ✅ ALLOWED CHANGES (DECOR ONLY):
-  - Replace furniture (sofas, tables, chairs).
+  - Replace furniture (sofas, tables, chairs) unless asked to preserve them.
   - Change soft furnishings (rugs, curtains, cushions).
   - Change wall finishes (paint, wallpaper) - but keep the wall flat and solid.
   - Update light fixtures (chandeliers) but keep the mounting point.
@@ -164,14 +164,13 @@ export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '')
   }
   
   if (refinement && refinement.trim().length > 0) {
-    // We add explicit constraints to the refinement to prevent "Surprise" themes from leaking outside
     basePrompt += `\n\nUSER THEME/REFINEMENT: "${refinement}".
     
     IMPORTANT: Apply the vibe of "${refinement}" to the INTERIOR FURNITURE AND DECOR ONLY. 
     - DO NOT change the outside environment or view through windows.
     - If the theme suggests a different location (e.g. underwater, space, forest), IGNORE that location for the exterior view. Keep the original exterior view.
     - DO NOT add new windows to match the theme.
-    - DO NOT change the ceiling structure to match the theme (e.g. do not turn a flat ceiling into a cave or spaceship roof).
+    - DO NOT change the ceiling structure to match the theme.
     `;
   }
   
@@ -183,22 +182,25 @@ export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '')
  */
 export const buildPartialPrompt = (itemsToAdd: string, styleLabel: string, refinement: string = '') => {
   const requestDescription = refinement 
-    ? `Add "${itemsToAdd}" and specifically "${refinement}"`
-    : `Add "${itemsToAdd}"`;
+    ? `Action: Add/Modify "${itemsToAdd}" with style "${refinement}"`
+    : `Action: Add/Modify "${itemsToAdd}"`;
 
-  let basePrompt = `Task: Realistic In-Painting / Object Insertion.
+  let basePrompt = `Task: Strict In-Painting / Object Insertion.
   
   User Request: ${requestDescription}.
   Style Context: ${styleLabel}.
   
-  STRICT RULES:
-  1. DO NOT CHANGE THE ROOM ARCHITECTURE.
-  2. **CEILING PRESERVATION**: Do not touch the ceiling, beams, or light fixtures unless asked.
-  3. **NO NEW WINDOWS**: Keep existing walls solid.
-  4. **PRESERVE OUTDOOR VIEW**: Do not modify what is seen through the windows.
-  5. Only add the requested items into the existing space.
+  CRITICAL PRESERVATION RULES:
+  1. **MODIFY ONLY** the requested items.
+  2. **PRESERVE EXISTING FURNITURE**: Do NOT change the sofa, armchairs, or coffee table unless the User Request specifically asks to change them.
+  3. **CEILING & WALLS**: Do not touch the ceiling, beams, or light fixtures. Do not move walls.
+  4. **NO NEW WINDOWS**: Keep existing walls solid.
+  5. **PRESERVE OUTDOOR VIEW**: Do not modify what is seen through the windows.
   
-  Output: The original room with ONLY the requested items added.
+  If the user asks to "Change the rug", you must ONLY change the rug. The couch must remain identical.
+  If the user asks to "Add a plant", you must ONLY add the plant. Do not redecorate the rest of the room.
+  
+  Output: The original room with ONLY the requested items added or modified.
   `;
 
   return basePrompt;
@@ -208,16 +210,20 @@ export const buildPartialPrompt = (itemsToAdd: string, styleLabel: string, refin
  * Constructs the prompt for Refining a generated image
  */
 export const buildRefinementPrompt = (instruction: string) => {
-  return `Task: Image Editing / Inpainting.
+  return `Task: Targeted Image Editing / Inpainting.
   
-  Input: An existing interior design image.
+  Input Image: provided.
   User Instruction: "${instruction}"
   
-  STRICT EXECUTION RULES:
-  1. **MODIFY ONLY** the specific items or areas mentioned in the User Instruction.
-  2. **FREEZE EVERYTHING ELSE**: Do not change the style, furniture, lighting, flooring, or walls unless explicitly asked.
-  3. **PROTECT ARCHITECTURE**: The ceiling (beams, height), windows (view), and walls are FROZEN. Do not touch them.
-  4. **PROTECT OUTDOORS**: The view through any windows must remain bit-for-bit identical.
+  CRITICAL PRESERVATION RULES (OBJECT PERMANENCE):
+  1. **TARGETED ACTION ONLY**: You are ONLY allowed to change the specific objects mentioned in the User Instruction.
+  2. **PROTECT EXISTING FURNITURE**: 
+     - If the instruction is "change the rug", you MUST KEEP the sofa, coffee table, and other furniture EXACTLY as they are. 
+     - If the instruction is "add a painting", you MUST NOT change the furniture.
+     - Do not "re-imagine" the room. Only apply the specific edit.
+  3. **FROZEN PIXELS**: Treat the unmentioned parts of the image as a "frozen mask". 
+  4. **STRUCTURAL INTEGRITY**: Keep the exact same room layout, camera angle, and lighting.
+  5. **PROTECT OUTDOORS**: The view through any windows must remain bit-for-bit identical.
   
   Goal: Return the same image, but with the specific user tweak applied. High realism.
   `;
