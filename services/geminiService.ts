@@ -60,6 +60,37 @@ const compressImage = async (base64String: string): Promise<string> => {
   });
 };
 
+/**
+ * Retry utility for API calls with exponential backoff
+ */
+const retryWithBackoff = async <T>(
+  operation: () => Promise<T>, 
+  retries = 3, 
+  delay = 2000
+): Promise<T> => {
+  try {
+    return await operation();
+  } catch (error: any) {
+    // Check for 429 (Resource Exhausted) or 503 (Service Unavailable)
+    const isRetryable = 
+      error?.status === 429 || 
+      error?.response?.status === 429 ||
+      (error?.message && (
+        error.message.includes('429') || 
+        error.message.toLowerCase().includes('quota') || 
+        error.message.includes('503') || 
+        error.message.toLowerCase().includes('overloaded')
+      ));
+
+    if (retries > 0 && isRetryable) {
+      console.warn(`API Rate limit hit. Retrying in ${delay}ms... (Attempts left: ${retries})`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return retryWithBackoff(operation, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+};
+
 export const restyleRoom = async (base64Image: string, prompt: string): Promise<string> => {
   try {
     const client = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -68,17 +99,20 @@ export const restyleRoom = async (base64Image: string, prompt: string): Promise<
     const optimizedImage = await compressImage(base64Image);
     const { mimeType, data } = getBase64Data(optimizedImage);
     
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [
-          { inlineData: { data, mimeType } },
-          { text: prompt },
-        ],
-      },
-      config: {
-        temperature: 0.2, // Low temperature to force strict adherence to structural constraints
-      }
+    // Wrap API call in retry logic
+    const response = await retryWithBackoff(async () => {
+      return await client.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: {
+          parts: [
+            { inlineData: { data, mimeType } },
+            { text: prompt },
+          ],
+        },
+        config: {
+          temperature: 0.2, // Low temperature to force strict adherence to structural constraints
+        }
+      });
     });
 
     // Check for generated images in the response
@@ -113,46 +147,49 @@ export const mineFurnitureData = async (base64Image: string, focusItems?: string
     const prompt = buildMiningPrompt(focusItems);
 
     // Use gemini-2.5-flash for analyzing the image (Multimodal Vision)
-    const response = await client.models.generateContent({
-      model: 'gemini-2.5-flash', 
-      contents: {
-        parts: [
-          { inlineData: { data, mimeType } },
-          { text: prompt }
-        ]
-      },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            furniture: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  itemName: { type: Type.STRING },
-                  color: { type: Type.STRING },
-                  searchQuery: { type: Type.STRING },
-                },
-                required: ["itemName", "color", "searchQuery"],
-              },
-            },
-            palette: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  hex: { type: Type.STRING },
-                  name: { type: Type.STRING },
-                },
-                required: ["hex", "name"],
-              }
-            }
-          },
-          required: ["furniture", "palette"]
+    // Wrap API call in retry logic
+    const response = await retryWithBackoff(async () => {
+      return await client.models.generateContent({
+        model: 'gemini-2.5-flash', 
+        contents: {
+          parts: [
+            { inlineData: { data, mimeType } },
+            { text: prompt }
+          ]
         },
-      }
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              furniture: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    itemName: { type: Type.STRING },
+                    color: { type: Type.STRING },
+                    searchQuery: { type: Type.STRING },
+                  },
+                  required: ["itemName", "color", "searchQuery"],
+                },
+              },
+              palette: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    hex: { type: Type.STRING },
+                    name: { type: Type.STRING },
+                  },
+                  required: ["hex", "name"],
+                }
+              }
+            },
+            required: ["furniture", "palette"]
+          },
+        }
+      });
     });
 
     if (response.text) {

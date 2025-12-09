@@ -261,8 +261,11 @@ const App: React.FC = () => {
       console.error(error);
       let errorMessage = "Oops! The AI had a creative block.";
       if (error instanceof Error) {
-        if (error.message.toLowerCase().includes("503") || error.message.toLowerCase().includes("overloaded")) {
+        const lowerMsg = error.message.toLowerCase();
+        if (lowerMsg.includes("503") || lowerMsg.includes("overloaded")) {
            errorMessage = "Service Busy. Please try again.";
+        } else if (lowerMsg.includes("429") || lowerMsg.includes("quota") || lowerMsg.includes("exhausted")) {
+           errorMessage = "Traffic is high. Please wait a moment and try again.";
         } else {
            errorMessage = `Error: ${error.message}`;
         }
