@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FurnitureItem } from '../types';
 import { ShoppingItem } from './ShoppingItem';
-import { X, Heart, ShoppingBag, Plus, Link as LinkIcon, ArrowRight } from 'lucide-react';
+import { X, Heart, ShoppingBag, Plus, Link as LinkIcon } from 'lucide-react';
 
 interface SavedItemsDrawerProps {
   isOpen: boolean;
