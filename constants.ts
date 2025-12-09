@@ -5,49 +5,49 @@ export const DESIGN_STYLES: DesignStyle[] = [
     id: 'modern', 
     label: 'Modern Minimalist', 
     description: 'Clean lines, neutral colors, and functional furniture.', 
-    color: 'bg-slate-800' 
+    color: 'bg-gradient-to-br from-slate-700 to-slate-900' 
   },
   { 
     id: 'coastal', 
     label: 'Coastal Breeze', 
     description: 'Light airy spaces, soft blues, whites, and natural textures.', 
-    color: 'bg-cyan-700' 
+    color: 'bg-gradient-to-br from-cyan-500 to-blue-600' 
   },
   { 
     id: 'farmhouse', 
     label: 'Modern Farmhouse', 
     description: 'Rustic charm, reclaimed wood, neutral tones, and cozy vibes.', 
-    color: 'bg-stone-700' 
+    color: 'bg-gradient-to-br from-stone-500 to-stone-700' 
   },
   { 
     id: 'boho', 
     label: 'Bohemian Chic', 
     description: 'Eclectic patterns, plants, rattan, and warm tones.', 
-    color: 'bg-orange-700' 
+    color: 'bg-gradient-to-br from-orange-400 to-amber-600' 
   },
   { 
     id: 'traditional', 
     label: 'Classic Traditional', 
     description: 'Timeless elegance, rich wood finishes, and symmetrical layouts.', 
-    color: 'bg-indigo-800' 
+    color: 'bg-gradient-to-br from-indigo-700 to-blue-900' 
   },
   { 
     id: 'midcentury', 
     label: 'Mid-Century Modern', 
     description: 'Retro vibes, organic curves, and teak wood.', 
-    color: 'bg-amber-700' 
+    color: 'bg-gradient-to-br from-amber-600 to-yellow-700' 
   },
   { 
     id: 'industrial', 
     label: 'Industrial Loft', 
     description: 'Exposed brick, metal accents, concrete, and raw materials.', 
-    color: 'bg-gray-800' 
+    color: 'bg-gradient-to-br from-gray-700 to-zinc-900' 
   },
   { 
     id: 'scandi', 
     label: 'Scandinavian', 
     description: 'Hygge, functionality, white walls, and light wood.', 
-    color: 'bg-emerald-700' 
+    color: 'bg-gradient-to-br from-emerald-500 to-teal-700' 
   }
 ];
 
@@ -129,17 +129,16 @@ export const PREDEFINED_PALETTES: { name: string; colors: ColorItem[] }[] = [
  * Constructs the prompt for a Full Room Makeover
  */
 export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '') => {
-  let basePrompt = `Role: Virtual Stager (Furniture Replacement Only).
+  let basePrompt = `Role: Architectural Preservationist & Interior Designer.
   Input: An image of a room.
   Goal: Generate a photorealistic image of the EXACT SAME room with "${styleLabel}" furniture and decor.
-  
-  🚧 HARD ARCHITECTURAL CONSTRAINTS (CRITICAL):
-  1. **CEILING PROTECTION (HIGHEST PRIORITY)**: The ceiling structure must remain UNTOUCHED. Preserve all beams, cornices, molding, skylights, and the ceiling height/slope. Do NOT smooth out textured ceilings or remove structural elements.
-  2. **ABSOLUTELY NO NEW WINDOWS**: Walls must remain solid. 
-  3. **PRESERVE STRUCTURE**: Do NOT add, remove, or move walls, doors, or beams.
-  4. **WINDOW VIEW PROTECTION (MANDATORY)**: The scenery, weather, lighting, and objects visible THROUGH the windows must remain 100% IDENTICAL to the original image. Do not change the outside world. Treat the window glass and the view behind it as a "protected mask" that cannot be repainted.
-  5. **LIGHTING**: Maintain the original direction of light coming from windows.
-  
+
+  🚨 CRITICAL - NEGATIVE CONSTRAINTS (VIOLATION = FAILURE):
+  1. **NO NEW WINDOWS**: You must NOT cut holes in existing walls. If a wall is solid, it STAYS solid. Do not add glass walls or sliding doors where there is currently a wall.
+  2. **EXTERIOR FROZEN**: The view outside the windows (trees, buildings, sky, weather) must be bit-for-bit IDENTICAL. Do not make it sunny if it is dark. Do not change the landscape.
+  3. **STRUCTURE LOCKED**: Do not change the ceiling height, slope, beams, or columns. 
+  4. **NO HALLUCINATED ARCHITECTURE**: Do not add arches, alcoves, or architectural features that do not exist.
+
   ✅ ALLOWED CHANGES (DECOR ONLY):
   - Replace furniture (sofas, tables, chairs) unless asked to preserve them.
   - Change soft furnishings (rugs, curtains, cushions).
@@ -168,9 +167,7 @@ export const buildMakeoverPrompt = (styleLabel: string, refinement: string = '')
     
     IMPORTANT: Apply the vibe of "${refinement}" to the INTERIOR FURNITURE AND DECOR ONLY. 
     - DO NOT change the outside environment or view through windows.
-    - If the theme suggests a different location (e.g. underwater, space, forest), IGNORE that location for the exterior view. Keep the original exterior view.
-    - DO NOT add new windows to match the theme.
-    - DO NOT change the ceiling structure to match the theme.
+    - If the user asks for "open" or "airy", achieve this via colors and furniture, NOT by removing walls or adding windows.
     `;
   }
   
@@ -192,13 +189,9 @@ export const buildPartialPrompt = (itemsToAdd: string, styleLabel: string, refin
   
   CRITICAL PRESERVATION RULES:
   1. **MODIFY ONLY** the requested items.
-  2. **PRESERVE EXISTING FURNITURE**: Do NOT change the sofa, armchairs, or coffee table unless the User Request specifically asks to change them.
-  3. **CEILING & WALLS**: Do not touch the ceiling, beams, or light fixtures. Do not move walls.
-  4. **NO NEW WINDOWS**: Keep existing walls solid.
-  5. **PRESERVE OUTDOOR VIEW**: Do not modify what is seen through the windows.
-  
-  If the user asks to "Change the rug", you must ONLY change the rug. The couch must remain identical.
-  If the user asks to "Add a plant", you must ONLY add the plant. Do not redecorate the rest of the room.
+  2. **NO STRUCTURAL CHANGES**: Do NOT add windows to solid walls. Walls must remain opaque and solid.
+  3. **PRESERVE OUTDOOR VIEW**: Do not modify what is seen through the windows.
+  4. **EXISTING FURNITURE**: Do NOT change unmentioned furniture.
   
   Output: The original room with ONLY the requested items added or modified.
   `;
@@ -210,22 +203,16 @@ export const buildPartialPrompt = (itemsToAdd: string, styleLabel: string, refin
  * Constructs the prompt for Refining a generated image
  */
 export const buildRefinementPrompt = (instruction: string) => {
-  return `Task: Targeted Image Editing / Inpainting.
+  return `Task: Interior Design Refinement.
   
   Input Image: provided.
   User Instruction: "${instruction}"
   
-  CRITICAL PRESERVATION RULES (OBJECT PERMANENCE):
-  1. **TARGETED ACTION ONLY**: You are ONLY allowed to change the specific objects mentioned in the User Instruction.
-  2. **PROTECT EXISTING FURNITURE**: 
-     - If the instruction is "change the rug", you MUST KEEP the sofa, coffee table, and other furniture EXACTLY as they are. 
-     - If the instruction is "add a painting", you MUST NOT change the furniture.
-     - Do not "re-imagine" the room. Only apply the specific edit.
-  3. **FROZEN PIXELS**: Treat the unmentioned parts of the image as a "frozen mask". 
-  4. **STRUCTURAL INTEGRITY**: Keep the exact same room layout, camera angle, and lighting.
-  5. **PROTECT OUTDOORS**: The view through any windows must remain bit-for-bit identical.
+  CRITICAL PRESERVATION RULES:
+  1. **NO ARCHITECTURAL CHANGES**: Do not add windows to solid walls. Do not move walls.
+  2. **PROTECT EXTERIOR**: The view outside windows is FROZEN. Do not change the weather or scenery.
   
-  Goal: Return the same image, but with the specific user tweak applied. High realism.
+  Goal: Apply the user's instruction to the room. Maintain photorealism.
   `;
 };
 

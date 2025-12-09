@@ -1,3 +1,4 @@
+
 export interface DesignStyle {
   id: string;
   label: string;
@@ -6,9 +7,11 @@ export interface DesignStyle {
 }
 
 export interface FurnitureItem {
+  id: string;
   itemName: string;
   color: string;
   searchQuery: string;
+  link?: string;
 }
 
 export interface ColorItem {
@@ -35,3 +38,10 @@ export interface ProcessingState {
 }
 
 export type DesignMode = 'MAKEOVER' | 'PARTIAL';
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  timestamp: number;
+}

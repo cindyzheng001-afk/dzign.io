@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { MiningResponse } from "../types";
+import { MiningResponse, FurnitureItem } from "../types";
 import { buildMiningPrompt } from "../constants";
 
 /**
@@ -156,7 +156,18 @@ export const mineFurnitureData = async (base64Image: string, focusItems?: string
     });
 
     if (response.text) {
-      return JSON.parse(response.text) as MiningResponse;
+      const parsed = JSON.parse(response.text) as { furniture: Omit<FurnitureItem, 'id'>[], palette: any[] };
+      
+      // Add IDs to furniture items
+      const furnitureWithIds = parsed.furniture.map(item => ({
+        ...item,
+        id: crypto.randomUUID()
+      }));
+
+      return {
+        furniture: furnitureWithIds,
+        palette: parsed.palette || []
+      };
     }
     return { furniture: [], palette: [] };
   } catch (e) {

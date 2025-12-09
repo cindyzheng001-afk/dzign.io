@@ -1,6 +1,6 @@
 import React from 'react';
 import { DesignStyle } from '../types';
-import { CheckCircle2 } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface StyleCardProps {
   style: DesignStyle;
@@ -13,27 +13,27 @@ export const StyleCard: React.FC<StyleCardProps> = ({ style, isSelected, onClick
     <div 
       onClick={onClick}
       className={`
-        relative cursor-pointer group rounded-xl p-4 border-2 transition-all duration-200 overflow-hidden
+        relative cursor-pointer group rounded-2xl p-5 border transition-all duration-300 h-full flex flex-col
         ${isSelected 
-          ? 'border-indigo-600 bg-indigo-50 shadow-md' 
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+          ? 'border-indigo-600 bg-white ring-4 ring-indigo-50 shadow-xl shadow-indigo-100 translate-y-[-2px]' 
+          : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-lg hover:shadow-gray-100 hover:translate-y-[-2px]'
         }
       `}
     >
       {isSelected && (
-        <div className="absolute top-2 right-2 text-indigo-600">
-          <CheckCircle2 size={20} fill="currentColor" className="text-white" />
+        <div className="absolute top-4 right-4 text-white bg-indigo-600 rounded-full p-1 shadow-md animate-fade-in">
+          <Check size={12} strokeWidth={3} />
         </div>
       )}
       
-      <div className={`w-12 h-12 rounded-full mb-3 flex items-center justify-center text-white font-bold text-lg ${style.color}`}>
+      <div className={`w-12 h-12 rounded-2xl mb-4 flex items-center justify-center text-white font-bold text-lg shadow-md ${style.color} group-hover:scale-110 transition-transform duration-300`}>
         {style.label.charAt(0)}
       </div>
       
-      <h3 className={`font-bold mb-1 ${isSelected ? 'text-indigo-900' : 'text-gray-800'}`}>
+      <h3 className={`font-bold mb-1.5 text-base ${isSelected ? 'text-indigo-900' : 'text-gray-900'}`}>
         {style.label}
       </h3>
-      <p className={`text-xs leading-relaxed ${isSelected ? 'text-indigo-700' : 'text-gray-500'}`}>
+      <p className="text-xs leading-relaxed text-gray-500 line-clamp-3">
         {style.description}
       </p>
     </div>
