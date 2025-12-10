@@ -141,7 +141,7 @@ exports.handler = async (event, context) => {
           candidates: [{
             content: {
               parts: [{
-                text: JSON.stringify({ furniture: [], palette: [] })
+                text: JSON.stringify({ furniture: [], palette:  [] })
               }]
             }
           }]
