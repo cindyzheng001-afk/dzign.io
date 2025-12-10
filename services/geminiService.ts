@@ -5,19 +5,6 @@
 import { MiningResponse, FurnitureItem } from "../types";
 import { buildMiningPrompt } from "../constants";
 
-/**
- * Helper to extract mime type and base64 data from a data URL
- */
-const getBase64Data = (base64String: string) => {
-  const matches = base64String.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
-  if (matches && matches.length === 3) {
-    return { mimeType: matches[1], data: matches[2] };
-  }
-  return {
-    mimeType: 'image/jpeg',
-    data: base64String.replace(/^data:image\/[a-z]+;base64,/, "")
-  };
-};
 
 /**
  * Compresses and resizes an image to ensure it fits within API payload limits.
